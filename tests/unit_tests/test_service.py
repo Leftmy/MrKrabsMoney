@@ -18,7 +18,7 @@ def test_create_payment_success_usd(app, mock_stripe_payment_intent):
         stripe_intent_id="pi_test_123456789",
         amount_in_cents=1515,
         currency="usd",
-        status=PaymentStatus.PENDING.value
+        status=PaymentStatus.SUCCEEDED.value
     )
     mock_repo.create.return_value = fake_payment
 
@@ -36,7 +36,7 @@ def test_create_payment_success_usd(app, mock_stripe_payment_intent):
         stripe_intent_id="pi_test_123456789",
         amount_in_cents=1515,
         currency="usd",
-        status=PaymentStatus.PENDING.value
+        status=PaymentStatus.SUCCEEDED.value
     )
     assert result == fake_payment
 
@@ -59,7 +59,7 @@ def test_create_payment_zero_decimal_currency(app, mock_stripe_payment_intent):
         stripe_intent_id="pi_test_123456789",
         amount_in_cents=500,
         currency="jpy",
-        status=PaymentStatus.PENDING.value
+        status=PaymentStatus.SUCCEEDED.value
     )
 
 

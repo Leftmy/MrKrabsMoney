@@ -1,4 +1,6 @@
 # tests/conftest.py
+from unittest.mock import MagicMock, patch
+
 import pytest
 from sqlalchemy.orm import scoped_session, sessionmaker
 from app import create_app
@@ -51,3 +53,13 @@ def db_session(db):
     Session.remove()
     transaction.rollback()
     connection.close()
+
+@pytest.fixture
+def mock_stripe_payment_intent():
+    """Mocks stripe.PaymentIntent.create API call and returns a fake intent object."""
+    with patch("stripe.PaymentIntent.create") as mock_create:
+        fake_intent = MagicMock()
+        fake_intent.id = "pi_test_123456789"
+        fake_intent.status = "succeeded"
+        mock_create.return_value = fake_intent
+        yield mock_create
