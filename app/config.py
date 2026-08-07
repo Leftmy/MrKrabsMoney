@@ -26,3 +26,7 @@ class Config:
         "CELERY_RESULT_BACKEND", 
         f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
     )
+
+    # Stripe
+    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "sk_test_fake_key")
+    STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "whsec_fake_secret")
