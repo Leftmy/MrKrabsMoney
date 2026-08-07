@@ -44,7 +44,7 @@ def test_update_status_success(repo):
 
     mock_session = MagicMock()
     with patch("app.repositories.payment_repository.db.session", mock_session), \
-         patch("app.models.payment.Payment.query", mock_query):
+            patch("app.models.payment.Payment.query", mock_query):
 
         # Act
         updated_payment = repo.update_status(stripe_id, PaymentStatus.SUCCEEDED.value)

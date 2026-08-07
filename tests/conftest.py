@@ -39,7 +39,7 @@ def db(app):
 @pytest.fixture(autouse=True)
 def db_session(db):
     """
-    Creates a new database transaction for each test and rolls back 
+    Creates a new database transaction for each test and rolls back
     after completion to ensure complete test isolation.
     """
     connection = db.engine.connect()
@@ -54,8 +54,9 @@ def db_session(db):
     transaction.rollback()
     connection.close()
 
+
 @pytest.fixture
-def mock_stripe_payment_intent():
+def mock_stripe_payment_intent():  # noqa: E501
     """Mocks stripe.PaymentIntent.create API call and returns a fake intent object."""
     with patch("stripe.PaymentIntent.create") as mock_create:
         fake_intent = MagicMock()

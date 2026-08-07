@@ -8,6 +8,7 @@ from app.api.v1.webhook_controller import webhook_bp
 
 migrate = Migrate()
 
+
 def create_app(config_override=None):
     app = Flask(__name__)
 

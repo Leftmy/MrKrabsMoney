@@ -23,7 +23,8 @@ class TestCreatePaymentEndpoint:
     """Integration tests for POST /api/v1/payments endpoint."""
 
     def test_create_payment_success(self, client, sample_payment_data):
-        """Test successful payment creation returns HTTP 201 and valid JSON structure."""
+        """Test successful payment creation
+        returns HTTP 201 and valid JSON structure."""
         payload = {
             "amount": 15.15,
             "currency": "USD"

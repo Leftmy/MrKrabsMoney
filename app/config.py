@@ -1,5 +1,6 @@
 import os
 
+
 class Config:
     # Database
     DB_USER = os.getenv("POSTGRES_USER", "postgres")
@@ -9,7 +10,7 @@ class Config:
     DB_NAME = os.getenv("POSTGRES_DB", "stripe_payments")
 
     SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL", 
+        "DATABASE_URL",
         f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
     )
 
@@ -24,11 +25,11 @@ class Config:
     )
 
     CELERY_BROKER_URL = os.getenv(
-        "CELERY_BROKER_URL", 
+        "CELERY_BROKER_URL",
         f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
     )
     CELERY_RESULT_BACKEND = os.getenv(
-        "CELERY_RESULT_BACKEND", 
+        "CELERY_RESULT_BACKEND",
         f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
     )
 

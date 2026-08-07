@@ -18,11 +18,11 @@ def get_payment_service() -> PaymentService:
 def create_payment():
     """
     Create a new payment intent via Stripe and persist it in the database.
-    
+
     Request Body:
         - amount (float): The monetary value.
         - currency (str): The 3-letter currency code.
-        
+
     Returns:
         - JSON representation of the payment record with status 201.
         - Error details with appropriate status codes on failure.
@@ -56,10 +56,10 @@ def create_payment():
 def get_payment(payment_id: UUID):
     """
     Retrieve payment details by its primary key UUID.
-    
+
     Path Parameters:
         - payment_id (UUID): The unique identifier of the payment.
-        
+
     Returns:
         - JSON representation of the payment record with status 200.
         - 404 error if the payment is not found.

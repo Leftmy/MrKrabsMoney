@@ -1,8 +1,7 @@
 import json
-from unittest.mock import patch, MagicMock
-import pytest
+from unittest.mock import patch
 
-from app.models.payment import Payment, PaymentStatus
+from app.models.payment import Payment
 from app.tasks.payment_tasks import process_stripe_webhook_task
 
 
@@ -24,8 +23,8 @@ class TestStripeWebhookEndpoint:
 
         # Mock Stripe signature verification and Celery delay method
         with patch("stripe.Webhook.construct_event") as mock_construct_event, \
-             patch("app.api.v1.webhook_controller.process_stripe_webhook_task.delay") as mock_task_delay:
-            
+                patch("app.api.v1.webhook_controller.process_stripe_webhook_task.delay") as mock_task_delay:
+
             mock_construct_event.return_value = payload
 
             response = client.post(
@@ -77,8 +76,8 @@ class TestStripeWebhookEndpoint:
         }
 
         with patch("stripe.Webhook.construct_event") as mock_construct_event, \
-             patch("app.api.v1.webhook_controller.process_stripe_webhook_task.delay") as mock_task_delay:
-            
+                patch("app.api.v1.webhook_controller.process_stripe_webhook_task.delay") as mock_task_delay:
+
             mock_construct_event.return_value = payload
 
             response = client.post(

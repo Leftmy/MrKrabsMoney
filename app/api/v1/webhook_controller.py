@@ -10,6 +10,7 @@ webhook_bp = Blueprint("webhooks", __name__, url_prefix="/api/v1/webhooks")
 def get_redis_client():
     return redis.Redis.from_url(current_app.config["REDIS_URL"], decode_responses=True)
 
+
 @webhook_bp.route("/stripe", methods=["POST"])
 def stripe_webhook():
     """
@@ -40,11 +41,10 @@ def stripe_webhook():
     event_id = event.id
     redis_key = f"webhook:stripe:processed:{event_id}"
 
-    is_new_event = redis_client.set(redis_key, "processing", nx=True, ex=259200) # 3 days expiration
+    is_new_event = redis_client.set(redis_key, "processing", nx=True, ex=259200)  # 3 days expiration
 
     if not is_new_event:
         return jsonify({"status": "ignored", "reason": "Duplicate event"}), 200
-
 
     event_type = event.type
     data_object = event.data.object

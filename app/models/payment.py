@@ -43,7 +43,7 @@ class Payment(db.Model):
         nullable=False,
         default=PaymentStatus.PENDING.value
     )
-    
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,

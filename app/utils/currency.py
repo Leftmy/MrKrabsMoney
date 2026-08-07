@@ -1,7 +1,7 @@
 from decimal import Decimal
 
 ZERO_DECIMAL_CURRENCIES = {
-    "bif", "clp", "djf", "gnf", "jpy", "kmf", "krw", 
+    "bif", "clp", "djf", "gnf", "jpy", "kmf", "krw",
     "mga", "pyg", "rwf", "ugx", "vnd", "vuv", "xaf", "xof", "xpf"
 }
 
@@ -16,7 +16,7 @@ def to_stripe_amount(amount: float | Decimal, currency: str = "usd") -> int:
 
     # Normalize removes trailing zeros (e.g. Decimal('10.500') -> Decimal('10.5'))
     exponent = d_amount.normalize().as_tuple().exponent
-    
+
     if isinstance(exponent, int) and exponent < 0:
         decimal_places = abs(exponent)
         max_allowed = 0 if curr in ZERO_DECIMAL_CURRENCIES else 2
