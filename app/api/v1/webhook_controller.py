@@ -3,14 +3,14 @@ import stripe
 
 from app.tasks.payment_tasks import process_stripe_webhook_task
 
-webhook_bp = Blueprint("webhooks", __name__, url_prefix="/webhooks")
+webhook_bp = Blueprint("webhooks", __name__, url_prefix="/api/v1/webhooks")
 
 
 @webhook_bp.route("/stripe", methods=["POST"])
 def stripe_webhook():
     """
     Handle incoming Stripe webhook events.
-    
+
     Verifies event signature and delegates background database processing to Celery task.
     """
     payload = request.get_data()
@@ -32,13 +32,12 @@ def stripe_webhook():
     except (ValueError, stripe.error.SignatureVerificationError) as err:
         return jsonify({"error": f"Invalid webhook payload or signature: {str(err)}"}), 400
 
-    event_type = event.get("type")
-    data_object = event.get("data", {}).get("object", {})
+    event_type = event.type
+    data_object = event.data.object
 
-    # We only process relevant payment intent events
     if event_type in ("payment_intent.succeeded", "payment_intent.payment_failed"):
-        stripe_intent_id = data_object.get("id")
-        status = data_object.get("status")
+        stripe_intent_id = getattr(data_object, "id", None)
+        status = getattr(data_object, "status", None)
 
         if stripe_intent_id and status:
             process_stripe_webhook_task.delay(

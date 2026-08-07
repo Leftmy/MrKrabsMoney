@@ -85,5 +85,16 @@ services:
     volumes:
       - .:/app
 
+  stripe-cli:
+    image: stripe/stripe-cli:latest
+    container_name: krabs_stripe_cli
+    restart: always
+    env_file:
+      - .env
+    command: listen --api-key ${STRIPE_SECRET_KEY} --forward-to web:5000/api/v1/webhooks/stripe
+    depends_on:
+      web:
+        condition: service_started
+
 volumes:
   postgres_data:
