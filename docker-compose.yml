@@ -4,6 +4,7 @@ x-env-config: &common-env
   env_file:
     - .env
   environment:
+    PYTHONPATH: /app
     DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@${DB_HOST:-db}:${DB_PORT:-5432}/${POSTGRES_DB:-krabs_payments}
     CELERY_BROKER_URL: redis://${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/${REDIS_DB:-0}
     CELERY_RESULT_BACKEND: redis://${REDIS_HOST:-redis}:${REDIS_PORT:-6379}/${REDIS_DB:-0}
@@ -60,7 +61,7 @@ services:
     build: .
     container_name: krabs_worker
     restart: always
-    command: celery -A celery_worker.celery_app worker --loglevel=info
+    command: celery -A celery_worker:celery_app worker --loglevel=info
     depends_on:
       db:
         condition: service_healthy
@@ -74,7 +75,7 @@ services:
     build: .
     container_name: krabs_flower
     restart: always
-    command: celery -A celery_worker.celery_app flower --port=5555
+    command: celery -A celery_worker:celery_app flower --port=5555
     ports:
       - "5555:5555"
     depends_on:

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from sqlalchemy.orm import scoped_session, sessionmaker
+import fakeredis
 from app import create_app
 from app.extensions import db as _db
 
@@ -64,3 +65,17 @@ def mock_stripe_payment_intent():  # noqa: E501
         fake_intent.status = "succeeded"
         mock_create.return_value = fake_intent
         yield mock_create
+
+
+@pytest.fixture
+def fake_redis_client(app):
+    """FakeRedis fixture with function-level return_value patching."""
+    fake_redis = fakeredis.FakeStrictRedis(decode_responses=True)
+
+    with patch("app.api.v1.webhook_controller.get_redis_client", return_value=fake_redis):
+        if "redis" in app.extensions:
+            app.extensions["redis"] = fake_redis
+
+        yield fake_redis
+
+        fake_redis.flushdb()

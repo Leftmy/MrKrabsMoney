@@ -10,7 +10,7 @@ from app.tasks.payment_tasks import process_stripe_webhook_task
 class TestStripeWebhookEndpoint:
     """Integration tests for POST /api/v1/webhooks/stripe endpoint."""
 
-    def test_webhook_success_triggers_celery_task(self, client):
+    def test_webhook_success_triggers_celery_task(self, client, fake_redis_client):
         """Test valid Stripe webhook triggers Celery task asynchronously and returns HTTP 200."""
         payload = {
             "id": "evt_test_123",
@@ -23,10 +23,8 @@ class TestStripeWebhookEndpoint:
             },
         }
 
-        # Transform dictionary into a valid stripe.Event object
         stripe_event = stripe.Event.construct_from(payload, key=None)
 
-        # Mock Stripe signature verification and Celery delay method
         with (
             patch("stripe.Webhook.construct_event") as mock_construct_event,
             patch(
@@ -47,10 +45,11 @@ class TestStripeWebhookEndpoint:
         assert response.status_code == 200
         assert response.get_json() == {"status": "success"}
 
-        # Verify Celery task was pushed to queue with correct params
         mock_task_delay.assert_called_once_with(
             stripe_intent_id="pi_test_987654321", status="succeeded"
         )
+
+        assert fake_redis_client.exists("webhook:stripe:processed:evt_test_123") == 1
 
     def test_webhook_invalid_signature_returns_400(self, client):
         """Test invalid signature returns HTTP 400 Bad Request."""
@@ -74,11 +73,11 @@ class TestStripeWebhookEndpoint:
         data = response.get_json()
         assert "error" in data
 
-    def test_webhook_ignores_unsupported_event_types(self, client):
+    def test_webhook_ignores_unsupported_event_types(self, client, fake_redis_client):
         """Test unsupported event type is acknowledged with HTTP 200 but doesn't trigger Celery task."""
         payload = {
             "id": "evt_test_456",
-            "type": "customer.created",  # Unhandled event
+            "type": "customer.created",
             "data": {"object": {}},
         }
 
@@ -110,7 +109,6 @@ class TestProcessStripeWebhookCeleryTask:
 
     def test_task_updates_payment_status_in_db(self, app, db):
         """Test Celery task finds payment by stripe_intent_id and updates its status in DB."""
-        # 1. Arrange: Insert a payment with 'pending' status
         with app.app_context():
             payment = Payment(
                 stripe_intent_id="pi_stripe_webhook_test",
@@ -121,13 +119,11 @@ class TestProcessStripeWebhookCeleryTask:
             db.session.add(payment)
             db.session.commit()
 
-        # 2. Act: Run Celery task directly (synchronously)
         with app.app_context():
             process_stripe_webhook_task(
                 stripe_intent_id="pi_stripe_webhook_test", status="succeeded"
             )
 
-        # 3. Assert: Verify status changed to 'succeeded' in DB
         with app.app_context():
             updated_payment = Payment.query.filter_by(
                 stripe_intent_id="pi_stripe_webhook_test"
@@ -138,7 +134,6 @@ class TestProcessStripeWebhookCeleryTask:
     def test_task_handles_non_existent_stripe_intent_id(self, app):
         """Test Celery task handles non-existent intent ID gracefully without crashing."""
         with app.app_context():
-            # Should not raise exception even if payment is not found
             process_stripe_webhook_task(
                 stripe_intent_id="pi_non_existent", status="succeeded"
             )
