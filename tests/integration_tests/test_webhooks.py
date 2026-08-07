@@ -1,12 +1,14 @@
 import json
 from unittest.mock import patch
 
+import stripe
+
 from app.models.payment import Payment
 from app.tasks.payment_tasks import process_stripe_webhook_task
 
 
 class TestStripeWebhookEndpoint:
-    """Integration tests for POST /webhooks/stripe endpoint."""
+    """Integration tests for POST /api/v1/webhooks/stripe endpoint."""
 
     def test_webhook_success_triggers_celery_task(self, client):
         """Test valid Stripe webhook triggers Celery task asynchronously and returns HTTP 200."""
@@ -16,24 +18,30 @@ class TestStripeWebhookEndpoint:
             "data": {
                 "object": {
                     "id": "pi_test_987654321",
-                    "status": "succeeded"
+                    "status": "succeeded",
                 }
-            }
+            },
         }
 
-        # Mock Stripe signature verification and Celery delay method
-        with patch("stripe.Webhook.construct_event") as mock_construct_event, \
-                patch("app.api.v1.webhook_controller.process_stripe_webhook_task.delay") as mock_task_delay:
+        # Transform dictionary into a valid stripe.Event object
+        stripe_event = stripe.Event.construct_from(payload, key=None)
 
-            mock_construct_event.return_value = payload
+        # Mock Stripe signature verification and Celery delay method
+        with (
+            patch("stripe.Webhook.construct_event") as mock_construct_event,
+            patch(
+                "app.api.v1.webhook_controller.process_stripe_webhook_task.delay"
+            ) as mock_task_delay,
+        ):
+            mock_construct_event.return_value = stripe_event
 
             response = client.post(
-                "/webhooks/stripe",
+                "/api/v1/webhooks/stripe",
                 data=json.dumps(payload),
                 headers={
                     "Content-Type": "application/json",
-                    "Stripe-Signature": "t=123,v1=fake_signature"
-                }
+                    "Stripe-Signature": "t=123,v1=fake_signature",
+                },
             )
 
         assert response.status_code == 200
@@ -41,26 +49,25 @@ class TestStripeWebhookEndpoint:
 
         # Verify Celery task was pushed to queue with correct params
         mock_task_delay.assert_called_once_with(
-            stripe_intent_id="pi_test_987654321",
-            status="succeeded"
+            stripe_intent_id="pi_test_987654321", status="succeeded"
         )
 
     def test_webhook_invalid_signature_returns_400(self, client):
         """Test invalid signature returns HTTP 400 Bad Request."""
-        import stripe
-
         with patch("stripe.Webhook.construct_event") as mock_construct_event:
-            mock_construct_event.side_effect = stripe.error.SignatureVerificationError(
-                "Invalid signature", sig_header="bad_header"
+            mock_construct_event.side_effect = (
+                stripe.error.SignatureVerificationError(
+                    "Invalid signature", sig_header="bad_header"
+                )
             )
 
             response = client.post(
-                "/webhooks/stripe",
+                "/api/v1/webhooks/stripe",
                 data=json.dumps({"type": "payment_intent.succeeded"}),
                 headers={
                     "Content-Type": "application/json",
-                    "Stripe-Signature": "invalid_sig"
-                }
+                    "Stripe-Signature": "invalid_sig",
+                },
             )
 
         assert response.status_code == 400
@@ -72,18 +79,26 @@ class TestStripeWebhookEndpoint:
         payload = {
             "id": "evt_test_456",
             "type": "customer.created",  # Unhandled event
-            "data": {"object": {}}
+            "data": {"object": {}},
         }
 
-        with patch("stripe.Webhook.construct_event") as mock_construct_event, \
-                patch("app.api.v1.webhook_controller.process_stripe_webhook_task.delay") as mock_task_delay:
+        stripe_event = stripe.Event.construct_from(payload, key=None)
 
-            mock_construct_event.return_value = payload
+        with (
+            patch("stripe.Webhook.construct_event") as mock_construct_event,
+            patch(
+                "app.api.v1.webhook_controller.process_stripe_webhook_task.delay"
+            ) as mock_task_delay,
+        ):
+            mock_construct_event.return_value = stripe_event
 
             response = client.post(
-                "/webhooks/stripe",
+                "/api/v1/webhooks/stripe",
                 data=json.dumps(payload),
-                headers={"Content-Type": "application/json", "Stripe-Signature": "valid_sig"}
+                headers={
+                    "Content-Type": "application/json",
+                    "Stripe-Signature": "valid_sig",
+                },
             )
 
         assert response.status_code == 200
@@ -101,7 +116,7 @@ class TestProcessStripeWebhookCeleryTask:
                 stripe_intent_id="pi_stripe_webhook_test",
                 amount_in_cents=2000,
                 currency="usd",
-                status="pending"
+                status="pending",
             )
             db.session.add(payment)
             db.session.commit()
@@ -109,13 +124,14 @@ class TestProcessStripeWebhookCeleryTask:
         # 2. Act: Run Celery task directly (synchronously)
         with app.app_context():
             process_stripe_webhook_task(
-                stripe_intent_id="pi_stripe_webhook_test",
-                status="succeeded"
+                stripe_intent_id="pi_stripe_webhook_test", status="succeeded"
             )
 
         # 3. Assert: Verify status changed to 'succeeded' in DB
         with app.app_context():
-            updated_payment = Payment.query.filter_by(stripe_intent_id="pi_stripe_webhook_test").first()
+            updated_payment = Payment.query.filter_by(
+                stripe_intent_id="pi_stripe_webhook_test"
+            ).first()
             assert updated_payment is not None
             assert updated_payment.status == "succeeded"
 
@@ -124,6 +140,5 @@ class TestProcessStripeWebhookCeleryTask:
         with app.app_context():
             # Should not raise exception even if payment is not found
             process_stripe_webhook_task(
-                stripe_intent_id="pi_non_existent",
-                status="succeeded"
+                stripe_intent_id="pi_non_existent", status="succeeded"
             )

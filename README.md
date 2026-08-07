@@ -1,4 +1,5 @@
 # Payment Webhook Service (MrKrabsMoney)
+<img width="400" height="420" alt="61bf7f9e6eacff4947598316e97019e1" src="https://github.com/user-attachments/assets/4fa3b0fd-e6d6-48a4-92a8-2a3e76e4fa07" />
 
 Сервіс для надійної обробки вебхуків платіжних систем (Stripe) з підтримкою ідемпотентності через Redis та асинхронною обробкою задач у Celery.
 
