@@ -18,7 +18,7 @@ def test_create_payment_success_usd(app, mock_stripe_payment_intent):
         stripe_intent_id="pi_test_123456789",
         amount_in_cents=1515,
         currency="usd",
-        status=PaymentStatus.SUCCEEDED.value
+        status=PaymentStatus.PENDING.value
     )
     mock_repo.create.return_value = fake_payment
 
@@ -36,7 +36,7 @@ def test_create_payment_success_usd(app, mock_stripe_payment_intent):
         stripe_intent_id="pi_test_123456789",
         amount_in_cents=1515,
         currency="usd",
-        status=PaymentStatus.SUCCEEDED.value
+        status=PaymentStatus.PENDING.value
     )
     assert result == fake_payment
 
@@ -59,7 +59,7 @@ def test_create_payment_zero_decimal_currency(app, mock_stripe_payment_intent):
         stripe_intent_id="pi_test_123456789",
         amount_in_cents=500,
         currency="jpy",
-        status=PaymentStatus.SUCCEEDED.value
+        status=PaymentStatus.PENDING.value
     )
 
 
@@ -137,7 +137,7 @@ def test_get_payment_not_found_returns_none(app):
 def test_update_payment_status_success(app):
     """Test updating payment status via service."""
     mock_repo = MagicMock()
-    fake_payment = MagicMock(status=PaymentStatus.SUCCEEDED.value)
+    fake_payment = MagicMock(status=PaymentStatus.PENDING.value)
     mock_repo.update_status.return_value = fake_payment
 
     service = PaymentService(repository=mock_repo)

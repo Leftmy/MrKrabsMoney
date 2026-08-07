@@ -50,7 +50,7 @@ class PaymentService:
             stripe_intent_id=intent.id,
             amount_in_cents=stripe_amount,
             currency=currency_clean,
-            status=intent.status
+            status="pending"
         )
 
     def get_payment_by_id(self, payment_id: str | uuid.UUID) -> Optional[Payment]:
