@@ -18,6 +18,11 @@ class Config:
     REDIS_PORT = os.getenv("REDIS_PORT", "6379")
     REDIS_DB = os.getenv("REDIS_DB", "0")
 
+    REDIS_URL = os.getenv(
+        "REDIS_URL",
+        f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+    )
+
     CELERY_BROKER_URL = os.getenv(
         "CELERY_BROKER_URL", 
         f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
